@@ -1,13 +1,15 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "./config";
+import { JWT_SECRET } from "@repo/backend-common/config";
 const app = express ();
 import { middleware } from "./middleware";
+
 
 // signin, signup and create-room endpoint
 app.post ('/signin', (req, res) => {
     // userId, password -> Validation by Zod
 })
+
 
 app.post ('/signup', (req, res) => {
 
@@ -21,6 +23,7 @@ app.post ('/signup', (req, res) => {
         token
     })
 })
+
 
 // user will be able join or create a room if it authorized
 // req.userId = (decoded as jwt.JWTPayload).userId as string

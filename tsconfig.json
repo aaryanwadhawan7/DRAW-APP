@@ -1,8 +1,29 @@
 {
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@repo/typescript-config/*": ["packages/typescript-config/*"]
+      "@repo/typecript-config/*": ["packages/typescript-config/*"],
+      "@repo/backend-common/*": ["packages/backend-common/*"],
+      // Add any additional packages here as needed
     }
-  }
+  },
+  "files": [],
+  "references": [
+    { "path": "packages/typescript-config" },
+    { "path": "packages/backend-common" },
+    { "path": "apps/http-backend" },
+    { "path": "apps/ws-backend" }
+    // Add references to any additional packages or apps here
+  ]
 }
