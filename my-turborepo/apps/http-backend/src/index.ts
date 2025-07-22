@@ -4,6 +4,8 @@ import { JWT_SECRET } from "@repo/backend-common/config";
 const app = express ();
 import { middleware } from "./middleware";
 import { CreateUserSchema, SigninSchema, CreateRoomSchema } from "@repo/common/types"
+import { prismaClient } from '@repo/db/client';  
+
 
 // signin, signup and create-room endpoint
 app.post ('/signup', (req, res) => {
@@ -14,6 +16,7 @@ app.post ('/signup', (req, res) => {
         })
         return;
     }
+
 })
 
 
