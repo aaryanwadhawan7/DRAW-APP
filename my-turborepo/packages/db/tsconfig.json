@@ -1,9 +1,13 @@
 {
-    "extends" : "@repo/typescript-config/base.json",
-    "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@repo/db/*": ["../../packages/db/src/*"]
-    }
-  }
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "module": "commonjs",      // or "esnext", depending on your setup
+    "target": "es2019",        // or your desired target
+    "declaration": true,       // generates `.d.ts` files alongside `.js`
+    "strict": true,            // recommended
+    "esModuleInterop": true,   // usually helpful with node interop
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"]
 }

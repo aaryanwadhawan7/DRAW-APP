@@ -15,14 +15,15 @@
     "paths": {
       "@repo/typecript-config/*": ["packages/typescript-config/*"],
       "@repo/backend-common/*": ["packages/backend-common/*"],
-       "@repo/db": ["packages/db/src/index.ts"],
-      "@repo/db/*": ["packages/db/src/*"]
+       "@repo/db": ["../../packages/db/dist"],
+      "@repo/db/*": ["../../packages/db/dist/*"]
     }
   },
   "files": [],
   "references": [
     { "path": "packages/typescript-config" },
-    { "path": "packages/backend-common" }
-    // Add references to any additional packages or apps here
+    { "path": "packages/backend-common" },
+    { "path": "packages/db"},
+    { "path": "packages/common"}
   ]
 }
