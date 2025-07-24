@@ -111,22 +111,44 @@ app.post('/room', middleware, async (req, res) => {
         const userId = req.userId;
 
         const room = await prismaClient.room.create({
-            data : {
-                slug : parsedData.data.name,
-                adminId : userId
+            data: {
+                slug: parsedData.data.name,
+                adminId: userId
             }
         })
 
-        res.json ({
-            "roomId" : room.id
+        res.json({
+            "roomId": room.id
         })
-    } catch (error : any) {
-        res.status (403).json ({
-            "message" : error.message
+    } catch (error: any) {
+        res.status(403).json({
+            "message": error.message
         })
     }
 })
 
+app.get('/chats/:roomId', async (req, res) => {
+    try {
+        const roomId = Number(req.params.roomId);
+        const messages = await prismaClient.chat.findMany({
+            where: {
+                roomId: roomId
+            },
+            orderBy: {
+                id: 'desc'
+            },
+            take: 50
+        })
+
+        res.json({
+            messages
+        })
+    } catch (error: any) {
+        res.json({
+            error: error.message
+        })
+    }
+})
 
 app.listen(3001, () => {
     console.log("Express application is running on port 3001.");
