@@ -3,7 +3,7 @@ import { WebSocket } from "ws";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config"
 const wss = new WebSocketServer({ port: 8080 });
-
+import { prismaClient } from "@repo/db/client";
 
 interface User {
     userId: string,
@@ -30,16 +30,16 @@ Our global variable will look like this
 const users: User[] = [];
 
 
-function removeUser (ws : WebSocket) {
-    const index= users.findIndex (x => x.ws === ws);
+function removeUser(ws: WebSocket) {
+    const index = users.findIndex(x => x.ws === ws);
     if (index != -1) {
-        users.splice (index, 1);
-        console.log (`User removed. Active number of users : ${users.length}`);
+        users.splice(index, 1);
+        console.log(`User removed. Active number of users : ${users.length}`);
     }
 }
 
 
-function findUser (ws : WebSocket) {
+function findUser(ws: WebSocket) {
     return users.find(x => x.ws === ws);
 }
 
@@ -74,78 +74,87 @@ wss.on('connection', function connection(ws, Request) {
                 return;
             }
 
-            const newUser : User = {
+            const newUser: User = {
                 userId,
-                rooms : [],
+                rooms: [],
                 ws
             }
 
             users.push(
-               newUser
+                newUser
             )
 
             //ws.close logic
-            ws.on ('close', function handler (code, reason) {
-                console.log (`userId : ${code} disconnected from the room due to ${reason}`);
-                removeUser (ws);
+            ws.on('close', function handler(code, reason) {
+                console.log(`userId : ${code} disconnected from the room due to ${reason}`);
+                removeUser(ws);
             })
 
             //ws.error logic 
-            ws.on('error', (error : Error) => {
-                console.log (`WebSocket error for user ${userId} due to ${error.message}`);
-                removeUser (ws);
+            ws.on('error', (error: Error) => {
+                console.log(`WebSocket error for user ${userId} due to ${error.message}`);
+                removeUser(ws);
             })
 
             // join-room, send-chat, leave-room Logic...
-            ws.on('message', function message(data) {
-               
-               const parsedData = JSON.parse(data as unknown as string); // {type : "join-room", roomId : "1221"}
-               // Before parsedData.type = "join-room" or "leave-room" or "chat", we had to make sure that user already exists
-               const user = findUser (ws);
-               if (user && parsedData.roomId) {
-                if (parsedData.type === "join-room") {
-                    // Check if user is already present in the room or not
-                    if (!user.rooms.includes(parsedData.roomId)) {
-                        user?.rooms.push(parsedData.roomId);
-                        console.log (`${user.userId} joined ${parsedData.roomId}.`);
-                    } else {
-                        console.log (`${user.userId} already exists in the room ${parsedData.roomId}`);
-                        return;
-                    }
-               }
+            ws.on('message', async function message(data) {
 
-                if (parsedData.type === "leave-room") { // {type : "leave-room", roomId : "12213"}
-                // Check if user is present in this room or not
-                if (user?.rooms.includes(parsedData.roomId)) {
-                user?.rooms.filter(x => x !== parsedData.roomId)
-                } else {
-                    console.log (`${user.userId} haven't joined the room yet!`);
-                    return;
+                const parsedData = JSON.parse(data as unknown as string); // {type : "join-room", roomId : "1221"}
+                // Before parsedData.type = "join-room" or "leave-room" or "chat", we had to make sure that user already exists
+                const user = findUser(ws);
+                if (user && parsedData.roomId) {
+                    if (parsedData.type === "join-room") {
+                        // Check if user is already present in the room or not
+                        if (!user.rooms.includes(parsedData.roomId)) {
+                            user?.rooms.push(parsedData.roomId);
+                            console.log(`${user.userId} joined ${parsedData.roomId}.`);
+                        } else {
+                            console.log(`${user.userId} already exists in the room ${parsedData.roomId}`);
+                            return;
+                        }
+                    }
+
+                    if (parsedData.type === "leave-room") { // {type : "leave-room", roomId : "12213"}
+                        // Check if user is present in this room or not
+                        if (user?.rooms.includes(parsedData.roomId)) {
+                            user?.rooms.filter(x => x !== parsedData.roomId)
+                        } else {
+                            console.log(`${user.userId} haven't joined the room yet!`);
+                            return;
+                        }
+                    }
                 }
-               }
-            }
 
 
                 if (parsedData.type === "chat") { // {types : "chat", message : "hi there", roomId : "1221"}
-                const roomId = parsedData.roomId;
-                const message = parsedData.message;
+                    const roomId = parsedData.roomId;
+                    const message = parsedData.message;
 
-                if (roomId && message) {
-                    if (user?.rooms.includes(roomId)) {
-                        users.forEach ((user) => {
-                            if (user.ws.readyState === WebSocket.OPEN) {
-                                user.ws.send(JSON.stringify({
-                                    type : "chat",
-                                    message : message,
-                                    roomId : roomId,
-                                    userId : userId
-                                })
-                            )
-                            }
-                        })
+                    if (roomId && message) {
+
+                        if (user?.rooms.includes(roomId)) {
+
+                            await prismaClient.chat.create({
+                                data: {
+                                    roomId,
+                                    message,
+                                    userId
+                                }
+                            })
+                            users.forEach((user) => {
+                                if (user.ws.readyState === WebSocket.OPEN) {
+                                    user.ws.send(JSON.stringify({
+                                        type: "chat",
+                                        message: message,
+                                        roomId: roomId,
+                                        userId: userId
+                                    })
+                                    )
+                                }
+                            })
+                        }
                     }
                 }
-               }
             })
         }
     } catch (error: any) {
