@@ -61,8 +61,11 @@ wss.on('connection', function connection(ws, Request) {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     if (!decoded) {
+        console.log("Token not decoded!")
         ws.close();
         return;
+    } else {
+        console.log("Token decoded successfully!")
     }
 
     try {
@@ -70,6 +73,7 @@ wss.on('connection', function connection(ws, Request) {
             const userIdRaw = (decoded as any).userId;
             const userId: string = String(userIdRaw);
             if (userId === null) {
+                console.log("UserId is null! It can't be null...");
                 ws.close();
                 return;
             }
@@ -117,17 +121,20 @@ wss.on('connection', function connection(ws, Request) {
                     if (parsedData.type === "leave-room") { // {type : "leave-room", roomId : "12213"}
                         // Check if user is present in this room or not
                         if (user?.rooms.includes(parsedData.roomId)) {
-                            user?.rooms.filter(x => x !== parsedData.roomId)
+                            user.rooms = user.rooms.filter(x => x !== parsedData.roomId);
+                            console.log(`${user.userId} left room ${parsedData.roomId}`);
                         } else {
                             console.log(`${user.userId} haven't joined the room yet!`);
                             return;
                         }
+
                     }
                 }
 
 
                 if (parsedData.type === "chat") { // {types : "chat", message : "hi there", roomId : "1221"}
-                    const roomId = parsedData.roomId;
+                    const roomId = typeof parsedData.roomId === 'string' ? Number(parsedData.roomId) : parsedData.roomId;
+
                     const message = parsedData.message;
 
                     if (roomId && message) {
@@ -142,16 +149,16 @@ wss.on('connection', function connection(ws, Request) {
                                 }
                             })
                             users.forEach((user) => {
-                                if (user.ws.readyState === WebSocket.OPEN) {
+                                if (user.ws.readyState === WebSocket.OPEN && user.rooms.includes(roomId)) {
                                     user.ws.send(JSON.stringify({
                                         type: "chat",
                                         message: message,
                                         roomId: roomId,
                                         userId: userId
-                                    })
-                                    )
+                                    }));
                                 }
-                            })
+                            });
+
                         }
                     }
                 }
